@@ -53,6 +53,7 @@ Não são obrigatórios, mas irão brilhar os olhos do nosso time:
 - Documentação da API (Swagger ou similar).
 - Arquitetura limpa e boas práticas de código.
 - Histórico de commits bem organizado.
+- Ambiente de desenvolvimento com Docker
 
 ---
 
