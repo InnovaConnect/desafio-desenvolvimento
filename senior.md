@@ -69,7 +69,6 @@ A aplicação deve permitir:
 - Estrutura de projeto organizada  
 - Tratamento de erros  
 - Código versionado no GitHub  
-- Uso de TypeScript  
 - Migrations de banco de dados  
 - Documentação da API (Swagger / OpenAPI)  
 - Paginação e filtros  
