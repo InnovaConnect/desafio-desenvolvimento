@@ -3,7 +3,7 @@
   <br><br><br>
 </p>
 
-# 🧪 Desafio Técnico – Desenvolvedor(a) **Sênior** Fullstack
+# 🧪 Desafio Técnico – Desenvolvedor(a) Sênior Fullstack
 
 ## 📌 Objetivo
 
