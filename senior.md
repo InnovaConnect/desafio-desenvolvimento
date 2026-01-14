@@ -1,4 +1,9 @@
-# 🧪 Desafio Técnico – Desenvolvedor(a) **Sênior**
+<p align="center">
+  <a href="https://innovaconnect.com.br/" target="blank"><img src="https://innspire.dev/assets/images/logos/innspire-logo.svg" width="200" alt="Logo" /></a>
+  <br><br><br>
+</p>
+
+# 🧪 Desafio Técnico – Desenvolvedor(a) **Sênior** Fullstack
 
 ## 📌 Objetivo
 
