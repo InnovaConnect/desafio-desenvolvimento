@@ -19,7 +19,6 @@ Você deve utilizar **uma das linguagens abaixo**:
 
 - Node.js  
 - PHP  
-- JavaScript  
 - TypeScript  
 
 📦 **Docker é obrigatório** para execução do projeto.
