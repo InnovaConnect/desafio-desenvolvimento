@@ -30,7 +30,8 @@ Foco em construção de CRUD simples, organização, boas práticas e entendimen
 ### 🧙 Desenvolvedor(a) Pleno
 Desafio mais completo, com estrutura fullstack, autenticação e interface de gestão com filtros.
 
-👉 [**Acessar Desafio Dev Pleno**](pleno.md)
+👉 [**Acessar Desafio Dev Pleno Node + Typescript + NestJS + ReactJS**](pleno.md)
+👉 [**Acessar Desafio Dev Pleno PHP + Laravel + Vue.js**](pleno-php.md)
 
 ---
 
