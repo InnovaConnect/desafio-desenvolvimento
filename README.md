@@ -35,6 +35,13 @@ Desafio mais completo, com estrutura fullstack, autenticação e interface de ge
 
 ---
 
+### 🐘 Desenvolvedor(a) PHP Especialista
+Desafio sem framework, focado na linguagem: PHP 8.5/8.6, memória, runtime, migração de legado e acompanhamento das RFCs.
+
+👉 [**Acessar Desafio Dev PHP Especialista**](php-especialista.md)
+
+---
+
 ## 📬 Como Participar
 
 1. Escolha o desafio mais adequado para seu perfil.
