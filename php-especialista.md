@@ -7,7 +7,7 @@ Procuramos alguém que acompanha a linguagem de perto: lê RFC no `wiki.php.net`
 Se você é essa pessoa, vai se divertir. Se não é, tudo bem: provavelmente temos outro desafio para você no [README](README.md).
 
 > **Regras do jogo**
-> - Prazo: **7 dias corridos** a partir do recebimento.
+> - Prazo: **72 horas** a partir do recebimento.
 > - **Sem framework.** Nada de Laravel, Symfony, Slim, etc. Composer é permitido apenas para ferramentas de desenvolvimento (PHPUnit/Pest, PHPStan/Psalm, Infection, PHP-CS-Fixer) e, no máximo, um pacote de runtime que você justifique no README.
 > - Pode usar IA como ferramenta, mas **você vai defender cada linha ao vivo**, sem consulta, numa sessão de pair programming sobre o seu próprio código. Código que você não sabe explicar conta contra.
 > - Escreva em `declare(strict_types=1);` em todos os arquivos.
