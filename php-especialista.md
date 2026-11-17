@@ -1,22 +1,24 @@
-# 🐘 Desafio Técnico: Desenvolvedor(a) PHP Especialista
+# 🐘 Desafio Técnico: Desenvolvedor(a) PHP + Laravel Especialista
 
-Este desafio não é sobre framework. É sobre **PHP**.
+Este desafio é sobre **PHP** e sobre **Laravel**, nessa ordem.
 
-Procuramos alguém que acompanha a linguagem de perto: lê RFC no `wiki.php.net`, sabe o que entrou na última release antes do post do blog sair, entende por que um array de 1 milhão de inteiros ocupa o que ocupa e tem opinião sobre a votação do último operador novo.
+Procuramos alguém que acompanha a linguagem de perto: lê RFC no `wiki.php.net`, sabe o que entrou na última release antes do post do blog sair, entende por que um array de 1 milhão de inteiros ocupa o que ocupa e tem opinião sobre a votação do último operador novo. E que, no dia a dia, conhece o Laravel por dentro: container, filas, Eloquent, e sabe quando o framework ajuda e quando atrapalha.
 
 Se você é essa pessoa, vai se divertir. Se não é, tudo bem: provavelmente temos outro desafio para você no [README](README.md).
 
 > **Regras do jogo**
 > - Prazo: **72 horas** a partir do recebimento.
-> - **Sem framework.** Nada de Laravel, Symfony, Slim, etc. Composer é permitido apenas para ferramentas de desenvolvimento (PHPUnit/Pest, PHPStan/Psalm, Infection, PHP-CS-Fixer) e, no máximo, um pacote de runtime que você justifique no README.
+> - Um único repositório com duas camadas: um **núcleo em PHP puro** (Parte 1, sem nenhuma dependência de framework) e uma **aplicação Laravel** que usa esse núcleo (Parte 2).
 > - Pode usar IA como ferramenta, mas **você vai defender cada linha ao vivo**, sem consulta, numa sessão de pair programming sobre o seu próprio código. Código que você não sabe explicar conta contra.
-> - Escreva em `declare(strict_types=1);` em todos os arquivos.
+> - Escreva em `declare(strict_types=1);` em todos os arquivos que você criar.
 
 ---
 
-## Parte 1: HeroForce Ledger (código)
+## Parte 1: HeroForce Ledger (núcleo em PHP puro)
 
 A HeroForce precisa consolidar o saldo das contas dos seus heróis a partir de um arquivo gigante de transações. O arquivo é grande, a máquina é pequena e dinheiro não admite arredondamento.
+
+O núcleo fica em um diretório próprio (ex.: `packages/ledger` ou `src/Ledger`) e **não pode importar nada de `Illuminate\`** nem de outro framework. Composer só para ferramentas de desenvolvimento.
 
 ### Entrada
 
@@ -46,7 +48,7 @@ ACC-00002,USD,1500.00
 5. **Idempotência:** o mesmo `id` pode aparecer mais de uma vez. Só a primeira ocorrência vale; as demais são ignoradas (não contam como rejeição).
 6. **Garantia do arquivo:** duplicatas e `ref` de estorno sempre apontam para uma transação que está no máximo **10.000 linhas antes**. Fora dessa janela, trate como `ref` inexistente.
 7. Linhas malformadas (JSON inválido, campo faltando, valor com mais de 2 casas, conta inexistente) são rejeitadas com o motivo correspondente e o processamento continua.
-8. Valores monetários **nunca** passam por `float`, em nenhum ponto do fluxo.
+8. Valores monetários **nunca** passam por `float`, em nenhum ponto do fluxo (incluindo a Parte 2 e o banco).
 
 ### Saída
 
@@ -64,28 +66,46 @@ Um JSON em `stdout`, **determinístico** (mesma entrada, mesmos bytes de saída)
 
 ### Restrições técnicas (aqui mora o desafio)
 
-- **PHP 8.5**, rodando em Docker a partir da imagem oficial `php:8.5-cli`.
-- O comando abaixo precisa terminar com sucesso no arquivo de 5 milhões de linhas:
+- **PHP 8.5**, rodando em Docker.
+- O núcleo expõe um CLI próprio, e o comando abaixo precisa terminar com sucesso no arquivo de 5 milhões de linhas:
 
   ```bash
   php -d memory_limit=64M bin/ledger accounts.csv transactions.ndjson > report.json
   ```
 
   Sim, 64 MB. Explique no README **por que** a sua estrutura cabe, com números (custo por elemento, não "porque usei generator").
-- **PHPStan nível `max`** (ou Psalm nível 1) **sem baseline e sem `@phpstan-ignore`**.
+- **PHPStan nível `max`** (ou Psalm nível 1) no núcleo, **sem baseline e sem `@phpstan-ignore`**.
 - Testes automatizados cobrindo as regras de negócio. Cada regra acima deve ter ao menos um teste com nome que a identifique.
 - Use a linguagem moderna **onde fizer sentido** e justifique as escolhas. Esperamos ver, no mínimo, uso consciente de: `enum`, classes `readonly`, *property hooks* e/ou visibilidade assimétrica (8.4), e pelo menos dois recursos que entraram no **PHP 8.5**. Usar recurso novo só para marcar presença conta contra: queremos ver critério.
 - Um script `bin/generate` que gera um `transactions.ndjson` de N linhas com **seed fixa** (mesma seed, mesmo arquivo, em qualquer máquina), respeitando a garantia da regra 6.
 
-### Entregáveis da Parte 1
+---
 
-- Repositório público no GitHub com histórico de commits real (não um commit único).
-- `README.md` com: como rodar, decisões de design, a conta de memória, e um **benchmark** (tempo e `memory_get_peak_usage(true)`) com OPcache/JIT desligado e ligado no CLI, com a sua interpretação do resultado. Se o JIT não ajudou, diga por quê.
-- GitHub Actions rodando testes e análise estática em uma **matriz com PHP 8.5 e PHP 8.6**. O 8.6 sai em 19/11/2026: conte no README o que (se algo) quebrou, gerou deprecation ou poderia ser simplificado com ele.
+## Parte 2: HeroForce Ledger API (Laravel)
+
+Agora o financeiro quer usar o ledger pelo sistema. Crie uma aplicação na **última versão estável do Laravel**, rodando em PHP 8.5 com **PostgreSQL**, que usa o núcleo da Parte 1 como dependência (via `path` repository do Composer ou equivalente). A regra de negócio continua no núcleo: o Laravel orquestra.
+
+### Requisitos
+
+1. **Autenticação** com Sanctum (token). Cada usuário só enxerga as próprias execuções (use **Policy**).
+2. **`POST /api/ledger-runs`**: recebe `accounts.csv` e `transactions.ndjson` (upload que pode passar de 500 MB; não carregue o arquivo em memória). Responde `202` com o id da execução e despacha o processamento para uma **fila**.
+3. O **job** de processamento:
+   - roda o núcleo e grava o resultado no banco;
+   - é **idempotente**: se falhar no meio e for reexecutado (`tries`, `backoff`), não duplica nem corrompe saldos;
+   - não permite duas execuções simultâneas do mesmo arquivo (mesmo hash de conteúdo para o mesmo usuário);
+   - grava os até 50.000 saldos de forma eficiente (não 50.000 `save()` individuais);
+   - ao terminar, dispara um **evento** que notifica o usuário (e-mail ou database notification).
+4. **`GET /api/ledger-runs/{id}`**: status (`queued`, `processing`, `done`, `failed`), estatísticas e rejeições por motivo, via **API Resource**.
+5. **`GET /api/ledger-runs/{id}/balances`**: saldos com filtros por moeda e faixa de saldo (`min`, `max`), ordenação e **paginação por cursor**. Dinheiro no banco como inteiro (centavos) e, no model, como value object via **cast customizado**. Nada de `float`.
+6. Um comando **Artisan** `ledger:process {accounts} {transactions}` que roda o mesmo fluxo pelo terminal, com barra de progresso.
+7. `Model::shouldBeStrict()` (ou equivalente) ligado fora de produção. Nenhum N+1 nos endpoints.
+8. **Testes de feature** (PHPUnit ou Pest) cobrindo: upload e despacho do job, policy (usuário A não vê execução de B), reexecução do job sem duplicar saldos, filtros e paginação. Use os *fakes* do framework onde fizer sentido.
+9. **Larastan** no maior nível que você conseguir na aplicação, sem baseline. Diga no README qual nível e por quê.
+10. `docker compose up` sobe aplicação, banco e worker da fila. Sail é permitido.
 
 ---
 
-## Parte 2: Arqueologia (migração de legado)
+## Parte 3: Arqueologia (migração de legado)
 
 O trecho abaixo roda em produção num cliente desde a época do PHP 7.4. Precisamos subir para o 8.5.
 
@@ -152,13 +172,22 @@ Entregue um arquivo `MIGRATION.md` no mesmo repositório com:
 
 ---
 
-## Parte 3: Changelog pessoal (texto curto, sem IA)
+## Parte 4: Changelog pessoal (texto curto, sem IA)
 
 No máximo uma página, em `CHANGELOG-PESSOAL.md`. Escreva como você fala. Vamos conversar sobre isso ao vivo.
 
-1. Uma RFC dos últimos dois anos que você acompanhou durante a discussão (aprovada ou recusada). Qual era a sua posição, o que te convenceu ou não, e como foi a votação.
+1. Uma RFC do PHP dos últimos dois anos que você acompanhou durante a discussão (aprovada ou recusada). Qual era a sua posição, o que te convenceu ou não, e como foi a votação.
 2. O que entra no PHP 8.6 que você vai usar na semana seguinte, e o que você teria votado contra.
-3. Se você pudesse propor uma RFC amanhã, qual seria e qual a principal objeção que ela receberia.
+3. O que mudou na última versão major do Laravel que afetou (ou afetaria) um projeto seu, e uma convenção do Laravel que você costuma quebrar de propósito, e por quê.
+
+---
+
+## ⭐ Diferenciais
+
+- Benchmark do CLI do núcleo (tempo e `memory_get_peak_usage(true)`) com OPcache/JIT desligado e ligado, com a sua interpretação. Se o JIT não ajudou, diga por quê.
+- GitHub Actions com matriz **PHP 8.5 e 8.6** (o 8.6 sai em 19/11/2026), contando no README o que quebrou ou gerou deprecation.
+- Laravel Octane rodando a API, com atenção a estado vazando entre requisições.
+- Testes de mutação (Infection) no núcleo.
 
 ---
 
@@ -169,18 +198,18 @@ No máximo uma página, em `CHANGELOG-PESSOAL.md`. Escreva como você fala. Vamo
 | Alto | Corretude das regras e determinismo da saída (rodamos com o **nosso** arquivo de avaliação) |
 | Alto | Caber em 64 MB e saber explicar o porquê |
 | Alto | Domínio da linguagem: escolhas modernas com critério, sem recurso "de enfeite" |
-| Alto | Parte 2: precisão das versões e achar a mudança silenciosa |
-| Médio | Análise estática limpa, testes e CI com a matriz 8.5/8.6 |
-| Médio | Benchmark e interpretação de OPcache/JIT |
-| Médio | Parte 3 e a conversa ao vivo |
-| Baixo | Histórico de commits e README |
+| Alto | Laravel: fila idempotente, Eloquent sem N+1, policy, cast de dinheiro, separação núcleo x framework |
+| Alto | Parte 3: precisão das versões e achar a mudança silenciosa |
+| Médio | Análise estática limpa e testes nas duas camadas |
+| Médio | Parte 4 e a conversa ao vivo |
+| Baixo | Histórico de commits, README e diferenciais |
 
-Depois da entrega, marcamos uma conversa de ~90 minutos: você apresenta, a gente faz perguntas sobre a linguagem e o runtime, e fazemos uma alteração ao vivo no seu código.
+Depois da entrega, marcamos uma conversa de ~90 minutos: você apresenta, a gente faz perguntas sobre a linguagem, o runtime e o Laravel, e fazemos uma alteração ao vivo no seu código.
 
 ## 📦 Entrega
 
-1. Repositório público no GitHub.
-2. `README.md`, `MIGRATION.md` e `CHANGELOG-PESSOAL.md` na raiz.
+1. Repositório público no GitHub com histórico de commits real (não um commit único).
+2. `README.md` (como rodar, decisões de design, conta de memória), `MIGRATION.md` e `CHANGELOG-PESSOAL.md` na raiz.
 3. Envie o link para nós.
 
 Boa sorte. E se você souber de cabeça o que sai no dia 19/11, já começou bem. 🐘
